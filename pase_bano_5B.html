@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pase al baño — 5° B</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f6fa;margin:0;padding:20px;color:#17202a}
+.card{max-width:520px;margin:auto;background:white;border-radius:22px;padding:22px;box-shadow:0 8px 30px #0001}
+h1{text-align:center;margin:5px 0}.sub{text-align:center;color:#667}
+label{display:block;font-weight:600;margin-top:18px}select,button{width:100%;padding:14px;border-radius:12px;border:1px solid #ccd3da;font-size:16px}
+button{border:0;background:#1677ff;color:white;font-weight:700;margin-top:12px}.reset{background:#555}
+.passes{display:flex;gap:10px;margin:22px 0}.pass{flex:1;text-align:center;padding:18px 5px;border-radius:16px;font-weight:800;background:#25b85a;color:white}.pass.used{background:#e53935}
+.status{text-align:center;font-size:20px;font-weight:800;margin:15px 0}.small{font-size:13px;color:#667;text-align:center;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🚻 Pase al baño</h1>
+<div class="sub">Escuela Manuel Acuña Narro TV · 5° B</div>
+
+<label for="student">Alumno</label>
+<select id="student"></select>
+
+<div class="passes" id="passes"></div>
+<div class="status" id="status"></div>
+
+<button id="use">Registrar acceso al baño</button>
+<button class="reset" id="reset">Reiniciar los 3 accesos</button>
+
+<div class="small">Cada alumno tiene 3 accesos. Verde = disponible · Rojo = utilizado.</div>
+</div>
+
+<script>
+const defaultStudents=["Juan Pérez"];
+let data=JSON.parse(localStorage.getItem("pases_bano")||"{}");
+const sel=document.getElementById("student");
+
+function save(){localStorage.setItem("pases_bano",JSON.stringify(data));}
+function render(){
+  const name=sel.value;
+  const used=data[name]||0;
+  document.getElementById("passes").innerHTML=[0,1,2].map(i=>
+    `<div class="pass ${i<used?"used":""}">${i<used?"USADO":"LIBRE"}<br>${i+1}</div>`
+  ).join("");
+  const remaining=3-used;
+  document.getElementById("status").textContent=remaining
+    ? `🟢 Le quedan ${remaining} acceso${remaining===1?"":"s"}`
+    : "🔴 Ya utilizó sus 3 accesos";
+  document.getElementById("use").disabled=remaining===0;
+  document.getElementById("use").style.opacity=remaining===0?".5":"1";
+}
+function init(){
+  defaultStudents.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});
+  render();
+}
+sel.onchange=render;
+document.getElementById("use").onclick=()=>{
+  const n=sel.value; data[n]=Math.min(3,(data[n]||0)+1); save(); render();
+};
+document.getElementById("reset").onclick=()=>{
+  if(confirm("¿Reiniciar los 3 accesos de "+sel.value+"?")){data[sel.value]=0;save();render();}
+};
+init();
+</script>
+</body>
+</html>
