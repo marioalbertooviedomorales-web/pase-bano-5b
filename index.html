@@ -4,64 +4,609 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pase al baño — 5° B</title>
+
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f6fa;margin:0;padding:20px;color:#17202a}
-.card{max-width:520px;margin:auto;background:white;border-radius:22px;padding:22px;box-shadow:0 8px 30px #0001}
-h1{text-align:center;margin:5px 0}.sub{text-align:center;color:#667}
-label{display:block;font-weight:600;margin-top:18px}select,button{width:100%;padding:14px;border-radius:12px;border:1px solid #ccd3da;font-size:16px}
-button{border:0;background:#1677ff;color:white;font-weight:700;margin-top:12px}.reset{background:#555}
-.passes{display:flex;gap:10px;margin:22px 0}.pass{flex:1;text-align:center;padding:18px 5px;border-radius:16px;font-weight:800;background:#25b85a;color:white}.pass.used{background:#e53935}
-.status{text-align:center;font-size:20px;font-weight:800;margin:15px 0}.small{font-size:13px;color:#667;text-align:center;margin-top:15px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#f3f6fa;
+  margin:0;
+  padding:20px;
+  color:#17202a
+}
+.card{
+  max-width:650px;
+  margin:auto;
+  background:white;
+  border-radius:22px;
+  padding:22px;
+  box-shadow:0 8px 30px #0001
+}
+h1{text-align:center;margin:5px 0}
+.sub{text-align:center;color:#667;margin-bottom:20px}
+
+label{
+  display:block;
+  font-weight:600;
+  margin-top:18px
+}
+
+select,input,button{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #ccd3da;
+  font-size:16px
+}
+
+button{
+  border:0;
+  background:#1677ff;
+  color:white;
+  font-weight:700;
+  margin-top:12px
+}
+
+button:disabled{
+  opacity:.5
+}
+
+.reset{
+  background:#555
+}
+
+.passes{
+  display:flex;
+  gap:10px;
+  margin:22px 0
+}
+
+.pass{
+  flex:1;
+  text-align:center;
+  padding:18px 5px;
+  border-radius:16px;
+  font-weight:800;
+  background:#25b85a;
+  color:white
+}
+
+.pass.used{
+  background:#e53935
+}
+
+.status{
+  text-align:center;
+  font-size:20px;
+  font-weight:800;
+  margin:15px 0
+}
+
+.info{
+  background:#eef5ff;
+  padding:12px;
+  border-radius:12px;
+  margin-top:15px
+}
+
+.admin{
+  margin-top:25px;
+  padding-top:20px;
+  border-top:1px solid #ddd
+}
+
+.small{
+  font-size:13px;
+  color:#667;
+  text-align:center;
+  margin-top:15px
+}
+
+#adminPanel{
+  display:none
+}
 </style>
 </head>
+
 <body>
+
 <div class="card">
+
 <h1>🚻 Pase al baño</h1>
-<div class="sub">Escuela Manuel Acuña Narro TV · 5° B</div>
+
+<div class="sub">
+Escuela Manuel Acuña Narro TV · 5° B
+</div>
+
+<div id="normal">
 
 <label for="student">Alumno</label>
+
 <select id="student"></select>
 
 <div class="passes" id="passes"></div>
+
 <div class="status" id="status"></div>
 
-<button id="use">Registrar acceso al baño</button>
-<button class="reset" id="reset">Reiniciar los 3 accesos</button>
+<button id="use">
+Registrar acceso al baño
+</button>
 
-<div class="small">Cada alumno tiene 3 accesos. Verde = disponible · Rojo = utilizado.</div>
+<button class="reset" id="reset">
+Reiniciar los 3 accesos
+</button>
+
+<div class="small">
+Cada alumno tiene 3 accesos.<br>
+🟢 Verde = disponible · 🔴 Rojo = utilizado
 </div>
 
-<script>
-const defaultStudents=["Juan Pérez"];
-let data=JSON.parse(localStorage.getItem("pases_bano")||"{}");
-const sel=document.getElementById("student");
+</div>
 
-function save(){localStorage.setItem("pases_bano",JSON.stringify(data));}
+
+<!-- ADMINISTRACIÓN -->
+
+<div class="admin">
+
+<button id="adminButton" class="reset">
+👨‍🏫 Administración
+</button>
+
+<div id="adminPanel">
+
+<h2>Administración</h2>
+
+<label>Seleccionar alumno</label>
+
+<select id="adminStudent"></select>
+
+<label>Identificador NFC</label>
+
+<input id="cardId" placeholder="ALUMNO001">
+
+<button id="saveCard">
+Guardar identificador NFC
+</button>
+
+<button id="resetStudent" class="reset">
+Reiniciar pases de este alumno
+</button>
+
+<div class="info">
+
+<strong>Enlace para la tarjeta NFC:</strong>
+
+<input id="nfcUrl" readonly>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   LISTA DE ALUMNOS
+   ===================================================== */
+
+const students = [
+
+{number:1,name:"ACUÑA LANDAVERDE XIMENA",card:"ALUMNO001"},
+{number:2,name:"ALONSO MARQUEZ MEDELLIN YUBSIRA",card:"ALUMNO002"},
+{number:3,name:"AMADO DIEGO DEISY",card:"ALUMNO003"},
+{number:4,name:"CALVO OVIEDO ERICK DAVID",card:"ALUMNO004"},
+{number:5,name:"CASTILLO RODRIGUEZ NATALY CORAL",card:"ALUMNO005"},
+{number:6,name:"CORDOVA RAMIREZ RIGOBERTO",card:"ALUMNO006"},
+{number:7,name:"CRUZ AYAL CYNTHIA CRISTEL",card:"ALUMNO007"},
+{number:8,name:"DIAZ VARGAS AISLINN",card:"ALUMNO008"},
+{number:9,name:"ESPINOSA LLANAS VALERY LITZY",card:"ALUMNO009"},
+{number:10,name:"EUSTACIO NICOLAS JANCARLO",card:"ALUMNO010"},
+{number:11,name:"GARCIA MORENO MIRIAM EDITH",card:"ALUMNO011"},
+{number:12,name:"GONZALEZ MATILDE DAIRA DENISSE",card:"ALUMNO012"},
+{number:13,name:"GONZALEZ ORTIZ JORGE RAUL",card:"ALUMNO013"},
+{number:14,name:"HERNANDEZ ALVAREZ FERNANDA NICOLE",card:"ALUMNO014"},
+{number:15,name:"HERNANDEZ MARTINEZ JOSSUE SAID",card:"ALUMNO015"},
+{number:16,name:"HERNANDEZ OVALLE ABRIL NAHOMY",card:"ALUMNO016"},
+{number:17,name:"HERNANDEZ SANCHEZ FLORENCIO DANIEL",card:"ALUMNO017"},
+{number:18,name:"HERRERA HERNANDEZ VALENTINA LIZBETH",card:"ALUMNO018"},
+{number:19,name:"JUAREZ BERNAL ERIKA NOHEMI",card:"ALUMNO019"},
+{number:20,name:"LEIJA GARCIA LEILANY MARIANA",card:"ALUMNO020"},
+{number:21,name:"LIRA GARCIA BYRON GABRIEL",card:"ALUMNO021"},
+{number:22,name:"MARTINEZ LOPEZ HERICK EDUARDO",card:"ALUMNO022"},
+{number:23,name:"MARTINEZ MARQUEZ SARAHY ALEJANDRA",card:"ALUMNO023"},
+{number:24,name:"MARTINEZ MARTINEZ SOFIA GUADALUPE",card:"ALUMNO024"},
+{number:25,name:"MENDOZA VIVEROS ALISSON NERY",card:"ALUMNO025"},
+{number:26,name:"MORALES LOERA BRYAN ALDAIR",card:"ALUMNO026"},
+{number:27,name:"OVIEDO AVILA SOFIA ARIZBETH",card:"ALUMNO027"},
+{number:28,name:"PEREZ JIMENEZ BRIANA LARISA",card:"ALUMNO028"},
+{number:29,name:"PEREZ RAMOS ALEXIS OZIEL",card:"ALUMNO029"},
+{number:30,name:"QUEZADA RIVAS ANDERSON YAHIR",card:"ALUMNO030"},
+{number:31,name:"RAMIREZ GOMEZ EDGAR DANIEL",card:"ALUMNO031"},
+{number:32,name:"RIOS ZAMORA ALEXA FERNANDA",card:"ALUMNO032"},
+{number:33,name:"ROMAN BAHENA OSCAR GABRIEL",card:"ALUMNO033"},
+{number:34,name:"SALAZAR ESTRADA JOSELYN GUADALUPE",card:"ALUMNO034"},
+{number:35,name:"SARMIENTO MARTINEZ ERICK JAHAZIEL",card:"ALUMNO035"},
+{number:36,name:"SAUCEDA HERNANDEZ AITANA ADILETH",card:"ALUMNO036"},
+{number:37,name:"SIFUENTES MARTINEZ GENESIS AILYN",card:"ALUMNO037"},
+{number:38,name:"TELLEZ MARTINEZ JADEN ISAAC",card:"ALUMNO038"},
+{number:39,name:"TORRES RIVERA YORLETH ALEJANDRA",card:"ALUMNO039"},
+{number:40,name:"VALDEZ SALAS JOSHUA ANTONIO",card:"ALUMNO040"},
+{number:41,name:"VAZQUEZ REYNA KARELY ABIGAIL",card:"ALUMNO041"},
+{number:42,name:"VILLARREAL VELAZQUEZ ANGEL ALEJANDRO",card:"ALUMNO042"},
+
+{number:43,name:"",card:"ALUMNO043"},
+{number:44,name:"",card:"ALUMNO044"},
+{number:45,name:"",card:"ALUMNO045"}
+
+];
+
+
+/* =====================================================
+   DATOS
+   ===================================================== */
+
+let data =
+JSON.parse(localStorage.getItem("pases_bano_5B") || "{}");
+
+
+const sel = document.getElementById("student");
+
+
+/* =====================================================
+   GUARDAR
+   ===================================================== */
+
+function save(){
+
+localStorage.setItem(
+"pases_bano_5B",
+JSON.stringify(data)
+);
+
+}
+
+
+/* =====================================================
+   MOSTRAR PASES
+   ===================================================== */
+
 function render(){
-  const name=sel.value;
-  const used=data[name]||0;
-  document.getElementById("passes").innerHTML=[0,1,2].map(i=>
-    `<div class="pass ${i<used?"used":""}">${i<used?"USADO":"LIBRE"}<br>${i+1}</div>`
-  ).join("");
-  const remaining=3-used;
-  document.getElementById("status").textContent=remaining
-    ? `🟢 Le quedan ${remaining} acceso${remaining===1?"":"s"}`
-    : "🔴 Ya utilizó sus 3 accesos";
-  document.getElementById("use").disabled=remaining===0;
-  document.getElementById("use").style.opacity=remaining===0?".5":"1";
+
+const student = students.find(
+s => s.card === sel.value
+);
+
+if(!student) return;
+
+const used = data[student.card] || 0;
+
+document.getElementById("passes").innerHTML =
+[0,1,2].map(i =>
+
+`<div class="pass ${i < used ? "used" : ""}">
+${i < used ? "USADO" : "LIBRE"}
+<br>
+${i+1}
+</div>`
+
+).join("");
+
+
+const remaining = 3 - used;
+
+
+document.getElementById("status").textContent =
+
+remaining
+
+? `🟢 Le quedan ${remaining} acceso${remaining === 1 ? "" : "s"}`
+
+: "🔴 Ya utilizó sus 3 accesos";
+
+
+const button = document.getElementById("use");
+
+button.disabled = remaining === 0;
+
+button.style.opacity =
+remaining === 0 ? ".5" : "1";
+
 }
+
+
+/* =====================================================
+   LLENAR LISTA
+   ===================================================== */
+
 function init(){
-  defaultStudents.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});
-  render();
+
+students.forEach(student => {
+
+const option =
+document.createElement("option");
+
+option.value = student.card;
+
+option.textContent =
+student.name ||
+`Alumno ${student.number} — SIN NOMBRE`;
+
+sel.appendChild(option);
+
+});
+
+
+/* ADMIN */
+
+const adminSel =
+document.getElementById("adminStudent");
+
+students.forEach(student => {
+
+const option =
+document.createElement("option");
+
+option.value = student.number;
+
+option.textContent =
+`${student.number} — ${
+student.name || "SIN NOMBRE"
+}`;
+
+adminSel.appendChild(option);
+
+});
+
+render();
+
+updateAdmin();
+
 }
-sel.onchange=render;
-document.getElementById("use").onclick=()=>{
-  const n=sel.value; data[n]=Math.min(3,(data[n]||0)+1); save(); render();
+
+
+/* =====================================================
+   REGISTRAR ACCESO
+   ===================================================== */
+
+document.getElementById("use").onclick = () => {
+
+const card = sel.value;
+
+data[card] =
+Math.min(
+3,
+(data[card] || 0) + 1
+);
+
+save();
+
+render();
+
 };
-document.getElementById("reset").onclick=()=>{
-  if(confirm("¿Reiniciar los 3 accesos de "+sel.value+"?")){data[sel.value]=0;save();render();}
+
+
+/* =====================================================
+   REINICIAR
+   ===================================================== */
+
+document.getElementById("reset").onclick = () => {
+
+const student =
+students.find(s => s.card === sel.value);
+
+if(
+confirm(
+"¿Reiniciar los 3 accesos de " +
+student.name +
+"?"
+)
+){
+
+data[student.card] = 0;
+
+save();
+
+render();
+
+}
+
 };
+
+
+/* =====================================================
+   NFC
+   ===================================================== */
+
+const params =
+new URLSearchParams(
+window.location.search
+);
+
+const cardFromNFC =
+params.get("card");
+
+if(cardFromNFC){
+
+const student =
+students.find(
+s =>
+s.card.toUpperCase() ===
+cardFromNFC.toUpperCase()
+);
+
+if(student){
+
+setTimeout(() => {
+
+sel.value = student.card;
+
+render();
+
+},100);
+
+}
+
+}
+
+
+/* =====================================================
+   ADMINISTRACIÓN
+   ===================================================== */
+
+document.getElementById("adminButton").onclick = () => {
+
+const panel =
+document.getElementById("adminPanel");
+
+panel.style.display =
+panel.style.display === "block"
+? "none"
+: "block";
+
+};
+
+
+function updateAdmin(){
+
+const number =
+parseInt(
+document.getElementById("adminStudent").value
+);
+
+const student =
+students.find(
+s => s.number === number
+);
+
+if(!student) return;
+
+document.getElementById("cardId").value =
+student.card;
+
+
+/* Crear enlace NFC */
+
+const url =
+new URL(
+window.location.href
+);
+
+url.search = "";
+
+url.searchParams.set(
+"card",
+student.card
+);
+
+document.getElementById("nfcUrl").value =
+url.toString();
+
+}
+
+
+document.getElementById("adminStudent")
+.addEventListener(
+"change",
+updateAdmin
+);
+
+
+/* GUARDAR TARJETA */
+
+document.getElementById("saveCard").onclick = () => {
+
+const number =
+parseInt(
+document.getElementById("adminStudent").value
+);
+
+const student =
+students.find(
+s => s.number === number
+);
+
+const newCard =
+document.getElementById("cardId")
+.value
+.trim()
+.toUpperCase();
+
+
+if(!newCard){
+
+alert(
+"Escribe un identificador NFC."
+);
+
+return;
+
+}
+
+
+student.card = newCard;
+
+updateAdmin();
+
+alert(
+"Identificador NFC guardado."
+);
+
+};
+
+
+/* REINICIAR ALUMNO */
+
+document.getElementById("resetStudent").onclick = () => {
+
+const number =
+parseInt(
+document.getElementById("adminStudent").value
+);
+
+const student =
+students.find(
+s => s.number === number
+);
+
+if(!student) return;
+
+
+if(
+confirm(
+"¿Reiniciar los 3 pases de " +
+(student.name || "este alumno") +
+"? "
+)
+){
+
+data[student.card] = 0;
+
+save();
+
+if(sel.value === student.card){
+
+render();
+
+}
+
+alert("Pases reiniciados.");
+
+}
+
+};
+
+
+/* =====================================================
+   INICIAR
+   ===================================================== */
+
 init();
+
 </script>
+
 </body>
 </html>
