@@ -128,7 +128,10 @@ Escuela Manuel Acuña Narro TV · 5° B
 
 <div class="status" id="status"></div>
 
-<button id="use">
+<div class="info" id="scanMessage">
+  Acerca la tarjeta NFC para registrar automáticamente una salida.
+</div>
+<button id="use" style="display:none">
 Registrar acceso al baño
 </button>
 
@@ -137,7 +140,7 @@ Reiniciar los 3 accesos
 </button>
 
 <div class="small">
-Cada alumno tiene 3 accesos.<br>
+Cada alumno tiene 3 accesos. La tarjeta registra la salida automáticamente.<br>
 🟢 Verde = disponible · 🔴 Rojo = utilizado
 </div>
 
@@ -249,8 +252,13 @@ const students = [
    DATOS
    ===================================================== */
 
-let data =
-JSON.parse(localStorage.getItem("pases_bano_5B") || "{}");
+let data = {};
+try {
+  data = JSON.parse(localStorage.getItem("pases_bano_5B") || "{}") || {};
+} catch (error) {
+  alert("No se pudieron leer los datos guardados. No registres nuevas salidas hasta recuperar una copia de seguridad.");
+  data = {};
+}
 
 
 const sel = document.getElementById("student");
@@ -421,35 +429,37 @@ render();
    NFC
    ===================================================== */
 
-const params =
-new URLSearchParams(
-window.location.search
-);
+const params = new URLSearchParams(window.location.search);
+const cardFromNFC = params.get("card");
 
-const cardFromNFC =
-params.get("card");
+if (cardFromNFC) {
+  const student = students.find(
+    s => s.card.toUpperCase() === cardFromNFC.trim().toUpperCase()
+  );
 
-if(cardFromNFC){
+  if (student) {
+    setTimeout(() => {
+      sel.value = student.card;
 
-const student =
-students.find(
-s =>
-s.card.toUpperCase() ===
-cardFromNFC.toUpperCase()
-);
+      // Cada apertura de la URL NFC registra una salida automáticamente.
+      // Se conserva la misma clave de localStorage para no perder los contadores existentes.
+      const current = Number(data[student.card] || 0);
+      if (current < 3) {
+        data[student.card] = current + 1;
+        save();
+        document.getElementById("scanMessage").textContent =
+          `Salida registrada automáticamente para ${student.name}.`;
+      } else {
+        document.getElementById("scanMessage").textContent =
+          `${student.name} ya utilizó sus 3 accesos.`;
+      }
 
-if(student){
-
-setTimeout(() => {
-
-sel.value = student.card;
-
-render();
-
-},100);
-
-}
-
+      render();
+    }, 100);
+  } else {
+    document.getElementById("scanMessage").textContent =
+      "No se encontró el identificador de esta tarjeta.";
+  }
 }
 
 
